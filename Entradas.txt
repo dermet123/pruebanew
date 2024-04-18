@@ -1,0 +1,57 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+
+using namespace std; // Usar el namespace std para evitar tener que anteponer std:: a todas las llamadas a funciones de la biblioteca estándar
+
+mutex mtx; // mutex para exclusión mutua
+
+enum class ProcessState { Ready, Running, Blocked };
+
+void process_thread(int id) {
+    ProcessState state = ProcessState::Ready;
+
+    while (true) {
+        // Bloquear el mutex
+        mtx.lock();
+
+        // Simular el estado del proceso
+        switch (state) {
+        case ProcessState::Ready:
+            cout << "Proceso " << id << " en estado LISTO" << endl;
+            state = ProcessState::Running;
+            break;
+        case ProcessState::Running:
+            cout << "Proceso " << id << " en estado EJECUCIÓN" << endl;
+            // Bloquear el proceso por un tiempo aleatorio
+            this_thread::sleep_for(chrono::milliseconds(rand() % 1000));
+            state = ProcessState::Blocked;
+            break;
+        case ProcessState::Blocked:
+            cout << "Proceso " << id << " en estado BLOQUEADO" << endl;
+            state = ProcessState::Ready;
+            break;
+        }
+
+        // Desbloquear el mutex
+        mtx.unlock();
+
+        // Esperar un tiempo aleatorio antes de continuar
+        this_thread::sleep_for(chrono::milliseconds(rand() % 500));
+    }
+}
+
+int main() {
+    // Iniciar 3 procesos
+    thread p1(process_thread, 1);
+    thread p2(process_thread, 2);
+    thread p3(process_thread, 3);
+
+    // Esperar a que los procesos terminen (presionar Ctrl+C para salir)
+    p1.join();
+    p2.join();
+    p3.join();
+
+    return 0;
+}
