@@ -3,7 +3,7 @@
 #include <mutex>
 #include <chrono>
 
-using namespace std; // Usar el namespace std para evitar tener que anteponer std:: a todas las llamadas a funciones de la biblioteca estándar
+using namespace std;
 
 mutex mtx; // mutex para exclusión mutua
 
@@ -55,3 +55,4 @@ int main() {
 
     return 0;
 }
+
