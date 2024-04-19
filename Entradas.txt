@@ -1,58 +1,38 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
-#include <chrono>
 
 using namespace std;
 
-mutex mtx; // mutex para exclusión mutua
+mutex myLock; // Renamed mutex to myLock
 
-enum class ProcessState { Ready, Running, Blocked };
+struct Task { // New structure to hold process information
+  int id;
+  string status;
+};
 
-void process_thread(int id) {
-    ProcessState state = ProcessState::Ready;
-
-    while (true) {
-        // Bloquear el mutex
-        mtx.lock();
-
-        // Simular el estado del proceso
-        switch (state) {
-        case ProcessState::Ready:
-            cout << "Proceso " << id << " en estado LISTO" << endl;
-            state = ProcessState::Running;
-            break;
-        case ProcessState::Running:
-            cout << "Proceso " << id << " en estado EJECUCIÓN" << endl;
-            // Bloquear el proceso por un tiempo aleatorio
-            this_thread::sleep_for(chrono::milliseconds(rand() % 1000));
-            state = ProcessState::Blocked;
-            break;
-        case ProcessState::Blocked:
-            cout << "Proceso " << id << " en estado BLOQUEADO" << endl;
-            state = ProcessState::Ready;
-            break;
-        }
-
-        // Desbloquear el mutex
-        mtx.unlock();
-
-        // Esperar un tiempo aleatorio antes de continuar
-        this_thread::sleep_for(chrono::milliseconds(rand() % 500));
-    }
+void workerThread(const Task& task) {
+  while (true) {
+    myLock.lock();
+    cout << "Task " << task.id << " is " << task.status << endl;
+    this_thread::sleep_for(chrono::seconds(1));
+    myLock.unlock();
+  }
 }
 
 int main() {
-    // Iniciar 3 procesos
-    thread p1(process_thread, 1);
-    thread p2(process_thread, 2);
-    thread p3(process_thread, 3);
+  Task task1{1, "prepared"}; // Use initializer list for Task objects
+  Task task2{2, "running"};
+  Task task3{3, "waiting"};
 
-    // Esperar a que los procesos terminen (presionar Ctrl+C para salir)
-    p1.join();
-    p2.join();
-    p3.join();
+  thread worker1(workerThread, task1);
+  thread worker2(workerThread, task2);
+  thread worker3(workerThread, task3);
 
-    return 0;
+  worker1.join();
+  worker2.join();
+  worker3.join();
+
+  return 0;
 }
 
